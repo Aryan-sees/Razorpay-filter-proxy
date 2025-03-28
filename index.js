@@ -15,7 +15,8 @@ app.use(express.json({
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 const LATENODE_WEBHOOK_URL = process.env.LATENODE_WEBHOOK_URL;
 
-const VALID_APP_IDS = ["100xschool1", "100xschool2"];
+// Define valid amounts in paise (₹2K and ₹48K)
+const VALID_AMOUNTS = [200000, 4800000];
 
 app.post("/razorpay-webhook", async (req, res) => {
   console.log("🔔 Received webhook");
@@ -42,14 +43,15 @@ app.post("/razorpay-webhook", async (req, res) => {
     return res.status(200).send("No payment entity");
   }
 
+  const amount = payment.amount;
   const appId = payment.notes?.app_id;
+  console.log("👀 Detected app_id:", appId || "none");
 
-  if (!VALID_APP_IDS.includes(appId)) {
-    console.log("⚠️ Ignored payment (app_id mismatch):", payment.id, "| app_id:", appId);
+  if (!VALID_AMOUNTS.includes(amount)) {
+    console.log("⚠️ Ignored payment (amount mismatch):", payment.id, "| amount:", amount);
     return res.status(200).send("Ignored");
   }
 
-  // Forward to Latenode
   try {
     await axios.post(LATENODE_WEBHOOK_URL, req.body);
     console.log("✅ Forwarded payment:", payment.id);
