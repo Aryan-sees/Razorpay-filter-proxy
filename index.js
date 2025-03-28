@@ -18,6 +18,10 @@ const LATENODE_WEBHOOK_URL = process.env.LATENODE_WEBHOOK_URL;
 const VALID_APP_IDS = ["100xschool1", "100xschool2"];
 
 app.post("/razorpay-webhook", async (req, res) => {
+  console.log("🔔 Received webhook");
+  console.log("Headers:", req.headers);
+  console.log("Raw Body:", req.rawBody?.toString());
+
   const signature = req.headers["x-razorpay-signature"];
   const expectedSignature = crypto
     .createHmac("sha256", WEBHOOK_SECRET)
@@ -25,29 +29,36 @@ app.post("/razorpay-webhook", async (req, res) => {
     .digest("hex");
 
   if (signature !== expectedSignature) {
-    console.log("Signature mismatch");
+    console.log("❌ Signature mismatch");
     return res.status(400).send("Invalid signature");
   }
 
+  console.log("✅ Signature verified");
+  console.log("Parsed Body:", JSON.stringify(req.body, null, 2));
+
   const payment = req.body.payload?.payment?.entity;
-  if (!payment) return res.status(200).send("No payment entity");
+  if (!payment) {
+    console.log("❌ No payment entity in payload");
+    return res.status(200).send("No payment entity");
+  }
 
   const appId = payment.notes?.app_id;
 
   if (!VALID_APP_IDS.includes(appId)) {
-    console.log("Ignored payment (app_id mismatch):", payment.id);
+    console.log("⚠️ Ignored payment (app_id mismatch):", payment.id, "| app_id:", appId);
     return res.status(200).send("Ignored");
   }
 
+  // Forward to Latenode
   try {
     await axios.post(LATENODE_WEBHOOK_URL, req.body);
-    console.log("Forwarded payment:", payment.id);
+    console.log("✅ Forwarded payment:", payment.id);
     res.status(200).send("Forwarded to Latenode");
   } catch (err) {
-    console.error("Error forwarding:", err.message);
+    console.error("❌ Error forwarding:", err.message);
     res.status(500).send("Failed to forward");
   }
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Razorpay proxy listening on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Razorpay proxy listening on port ${PORT}`));
