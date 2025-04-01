@@ -43,7 +43,7 @@ app.post("/razorpay-webhook", async (req, res) => {
     return res.status(200).send("No payment entity");
   }
 
-  const amount = payment.amount;
+  const amount = parseInt(payment.amount);
   const appId = payment.notes?.app_id;
   console.log("👀 Detected app_id:", appId || "none");
 
