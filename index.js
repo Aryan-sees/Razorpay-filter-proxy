@@ -16,7 +16,7 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 const LATENODE_WEBHOOK_URL = process.env.LATENODE_WEBHOOK_URL;
 
 // Define valid amounts in paise (₹2K and ₹48K)
-const VALID_AMOUNTS = [200000, 4800000];
+const VALID_AMOUNTS = [200000, 4800000, 2500100];
 
 app.post("/razorpay-webhook", async (req, res) => {
   console.log("🔔 Received webhook");
